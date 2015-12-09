@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Analytics Challenge by margemm</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Analytics Challenge</h1>
+        <h2></h2>
+        <a href="https://github.com/margemm/WellsFargoAnalyticsChallenge" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h3>
+<a id="initial-process---determining-how-to-analyze-the-data" class="anchor" href="#initial-process---determining-how-to-analyze-the-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Initial Process - Determining How to Analyze the Data</h3>
+
+<p>Upon receiving the content for the data analytics challenge, there were several different methods for sorting the data that were tried -- sorting the data chronologically didn’t work very well, because there was so much variance in the volume of content gathered each month. It seemed that the best way to sort the data was the most straightforward - by bank.  We gave 5 categories to the data: content mentioning Bank A, Bank B, Bank C, Bank D, and all other content (other banks or no banks mentioned).  We also paid some attention to the split between content generated on facebook and content generated on twitter.</p>
+
+<p>For a deeper analysis, a semi­-random sample of 80 content posts was taken and given extra classifications according to topic, cause of post, and audience. This sample was obtained by taking a random sample of 100 content posts from the first four categories, keeping with the comparative method used so far, and then determining which posts out of the 100 were meaningful. The information gleaned from this analysis, combined with our coded analysis, provided us with a cohesive narrative regarding why people post, what they post about, and who their audience is, and how each bank is regarded comparatively.</p>
+
+<h3>
+<a id="sentiment-analysis" class="anchor" href="#sentiment-analysis" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sentiment Analysis</h3>
+
+<p>In the coding process, a random sample (~10,000 posts) of the consumer content was divided into 5 categories: content mentioning BankA(1), BankB(2), BankC(3), BankD(4), or none of the four banks(5). By using a sentiment analysis patch in the code, content was categorized as positive or negative, and each of the 5 categories was then scored according to their amount of positive vs. negative content. This gives a rough idea of how consumers perceive each bank on a large scale.</p>
+
+<p>We used a sentiment analysis patch in our code; an excerpt is detailed below:</p>
+
+<pre><code>score.sentiment = function(sentences, pos.words, neg.words, .progress='none')
+{
+require(plyr)
+require(stringr)
+
+# we got a vector of sentences. plyr will handle a list
+# or a vector as an "l" for us
+# we want a simple array ("a") of scores back, so we use 
+# "l" + "a" + "ply" = "laply":
+scores = laply(sentences, function(sentence, pos.words, neg.words) {
+
+# clean up sentences with R's regex-driven global substitute, gsub():
+sentence = gsub('[[:punct:]]', '', sentence)
+sentence = gsub('[[:cntrl:]]', '', sentence)
+sentence = gsub('\\d+', '', sentence)
+# and convert to lower case:
+sentence = tolower(sentence)
+
+# split into words. str_split is in the stringr package
+word.list = str_split(sentence, '\\s+')
+# sometimes a list() is one level of hierarchy too much
+words = unlist(word.list)
+
+# compare our words to the dictionaries of positive &amp; negative terms
+pos.matches = match(words, pos.words)
+neg.matches = match(words, neg.words)
+
+# match() returns the position of the matched term or NA
+# we just want a TRUE/FALSE:
+pos.matches = !is.na(pos.matches)
+neg.matches = !is.na(neg.matches)
+
+# and conveniently enough, TRUE/FALSE will be treated as 1/0 by sum():
+score = sum(pos.matches) - sum(neg.matches)
+
+return(score)
+}, pos.words, neg.words, .progress=.progress )
+
+scores.df = data.frame(score=scores, text=sentences)
+return(scores.df)
+}
+</code></pre>
+
+<h3>
+<a id="the-data" class="anchor" href="#the-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Data</h3>
+
+<p>For the following graphs, the data is organized into groups: 0 is Bank A, 1 is Bank B, 2 is Bank C, 3 is Bank D, 4 is no banks/other banks</p>
+
+<p><img src="http://i.imgur.com/f1pNfVO.png" alt="Average Sentiment Score"></p>
+
+<p>The average overall scores among the banks - Bank A has the highest overall score</p>
+
+<p><img src="http://i.imgur.com/i8Mvtzo.png" alt="Average Positive Scores"></p>
+
+<p>The average positive scores among the banks - Bank B has the highest positive score</p>
+
+<p><img src="http://i.imgur.com/Lzm6kEm.png" alt="Average Negative Scores"></p>
+
+<p>The average negative scores among the banks - Bank C has the highest negative score</p>
+
+<h3>
+<a id="in-depth-analysis" class="anchor" href="#in-depth-analysis" aria-hidden="true"><span class="octicon octicon-link"></span></a>In Depth Analysis</h3>
+
+<p>In depth analysis was used to get a list of topics and substances for the user-generated content, as well as to determine the intended audience of the content.  This was done by taking 20 posts/tweets from each bank and determining the subject or topic of the post, what caused the user to post (substance), and the intended audience. </p>
+
+<p>About ⅓ of the content was directed at the bank itself, and close to ⅔ of the content was directed at a general audience; a very small percent of the content was directed at a customer from the bank.</p>
+
+<p>Overall, almost all of the content posts regarding customer service that were analyzed were caused by a bad experience. Other topics, such as PR, had greater contrast within their substance -- the majority of posts here were shared news articles, but also included some appreciation posts, mostly for Bank A and Bank B.  This agrees with our sentiment analysis that Bank A and Bank B are the banks with the highest sentiment score, and the greatest number of positive posts.  However, Bank A and Bank B also garnered their fair share of negative feedback; much of the feedback across all banks was negative, especially concerning customer service. </p>
+
+<p>One of the most notable aspects of the topic distribution was the fact that Bank D was the only bank with a significant number of posts about security; when sorted by date, the bulk of these posts occur in September/October of 2014, likely tying them to a specific breach of security rather than an ongoing problem with the bank’s infrastructure.</p>
+
+<h3>
+<a id="suggestions-for-further-research" class="anchor" href="#suggestions-for-further-research" aria-hidden="true"><span class="octicon octicon-link"></span></a>Suggestions for Further Research</h3>
+
+<p>In determining what would give our data greater meaning, the largest issue is how well the sentiment analysis works.  Some tweets, such as this one:</p>
+
+<pre><code>    “i would like to send out a special thank you to the teller at the BankA 
+     for telling everyone at the top of her lungs how much cash i just deposited 
+     into my account and the last four numbers of my account! great job and thanks 
+     for the discretion!”
+</code></pre>
+
+<p>would likely have been scored positively.  The deeper meaning (ingratitude vs. gratitude) is not evident without knowing that the situation described is the opposite of discretion, and we aren’t able to check for sarcasm with an algorithm.  In the future, it would be a good idea to take a sample of the code-scored content and cross-check it against a human score, thus determining how much the sentiment analysis can be trusted overall.</p>
+
+<p>Additionally, while we sorted the content for usefulness for some of our analysis ( the 20 posts from each bank used for in depth analysis were pared down from a sample of 100 each, and judged on whether or not they carried a lot of meaning), it would be helpful in the future to do this for more of the content.  This is a timely process, but would greatly increase how useful the results are, as results are only as useful as the data they are derived from.</p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/margemm/WellsFargoAnalyticsChallenge/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/margemm/WellsFargoAnalyticsChallenge/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/margemm/WellsFargoAnalyticsChallenge"></a> is maintained by <a href="https://github.com/margemm">margemm</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
